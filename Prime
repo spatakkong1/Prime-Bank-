@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First National Bank - Secure Online Banking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { font-family: 'Inter', sans-serif; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e40af 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-item {
+            position: relative;
+            cursor: pointer;
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #3b82f6;
+            transition: width 0.3s;
+        }
+        .nav-item:hover::after, .nav-item.active::after {
+            width: 100%;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .balance-shimmer {
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, #1e3a8a 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .credit-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .credit-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+    <!-- Auth Screens -->
+    <div id="authScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 p-4">
+        <div class="w-full max-w-md">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
+                    <i class="fas fa-university text-4xl text-blue-900"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white">First National Bank</h1>
+                <p class="text-blue-200 mt-2">Member FDIC | Equal Housing Lender</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Secure Login</h2>
+                
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="loginUserId" required class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Enter User ID">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                            <input type="password" id="loginPassword" required class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="Enter Password">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="rememberMe" class="mr-2 rounded text-blue-600 focus:ring-blue-500">
+                            <span class="text-gray-600">Remember me</span>
+                        </label>
+                        <a href="#" onclick="showForgotPassword()" class="text-blue-600 hover:text-blue-800 font-medium">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2">
+                        <span>Sign In</span>
+                        <div id="loginSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                </form>
+                
+                <div class="mt-6 pt-6 border-t border-gray-200 text-center">
+                    <p class="text-gray-600 mb-4">Don't have an account?</p>
+                    <button onclick="showEnroll()" class="w-full border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+                        Enroll Now
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-center text-xs text-gray-500">
+                    <p>Protected by 256-bit SSL encryption</p>
+                    <div class="flex justify-center space-x-4 mt-2">
+                        <i class="fas fa-shield-alt text-green-600"></i>
+                        <i class="fas fa-lock text-green-600"></i>
+                        <i class="fas fa-user-shield text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment Form -->
+            <div id="enrollForm" class="hidden bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
+                <button onclick="showLogin()" class="mb-4 text-gray-500 hover:text-gray-700 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Login
+                </button>
+                
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Open an Account</h2>
+                <p class="text-gray-600 mb-6">Join over 2 million customers banking with confidence</p>
+                
+                <form onsubmit="handleEnroll(event)" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="enrollFirstName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="enrollLastName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="enrollEmail" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="enrollPhone" required pattern="[0-9]{10}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1234567890">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Create User ID</label>
+                        <input type="text" id="enrollUserId" required minlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Minimum 6 characters">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
+                        <input type="password" id="enrollPassword" required minlength="8" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Minimum 8 characters">
+                        <p class="text-xs text-gray-500 mt-1">Must include uppercase, number, and special character</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <input type="password" id="enrollConfirmPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Initial Deposit</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-500">$</span>
+                            <input type="number" id="enrollDeposit" required min="100" value="1000" class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Minimum $100 to open</p>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <input type="checkbox" id="agreeTerms" required class="mt-1 mr-2">
+                        <label class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" id="enrollBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg flex items-center justify-center space-x-2">
+                        <span>Create Account</span>
+                        <div id="enrollSpinner" class="loading-spinner hidden"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Forgot Password -->
+            <div id="forgotForm" class="hidden bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
+                <button onclick="showLogin()" class="mb-4 text-gray-500 hover:text-gray-700 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Login
+                </button>
+                
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Reset Password</h2>
+                <p class="text-gray-600 mb-6">Enter your email to receive reset instructions</p>
+                
+                <form onsubmit="handleForgotPassword(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                        Send Reset Link
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Banking App -->
+    <div id="mainApp" class="hidden">
+        <!-- Navigation -->
+        <nav class="gradient-bg text-white shadow-lg sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-8">
+                        <div class="flex items-center space-x-3 cursor-pointer" onclick="showSection('dashboard')">
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-university text-xl"></i>
+                            </div>
+                            <span class="text-xl font-bold">FNB</span>
+                        </div>
+                        
+                        <div class="hidden md:flex space-x-6">
+                            <a onclick="showSection('dashboard')" id="nav-dashboard" class="nav-item active px-3 py-2 text-sm font-medium hover:text-blue-200">Dashboard</a>
+                            <a onclick="showSection('accounts')" id="nav-accounts" class="nav-item px-3 py-2 text-sm font-medium hover:text-blue-200">Accounts</a>
+                            <a onclick="showSection('transfer')" id="nav-transfer" class="nav-item px-3 py-2 text-sm font-medium hover:text-blue-200">Transfer</a>
+                            <a onclick="showSection('pay')" id="nav-pay" class="nav-item px-3 py-2 text-sm font-medium hover:text-blue-200">Pay Bills</a>
+                            <a onclick="showSection('cards')" id="nav-cards" class="nav-item px-3 py-2 text-sm font-medium hover:text-blue-200">Cards</a>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showNotifications()" class="relative p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition">
+                            <i class="fas fa-bell"></i>
+                            <span id="notifBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                        </button>
+                        
+                        <div class="relative" id="userMenu">
+                            <div onclick="toggleUserMenu()" class="flex items-center space-x-3 cursor-pointer hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition">
+                                <div class="text-right hidden sm:block">
+                                    <p id="userNameDisplay" class="text-sm font-semibold">John Smith</p>
+                                    <p class="text-xs text-blue-200">Online</p>
+                                </div>
+                                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                            
+                            <!-- Dropdown -->
+                            <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl py-2 text-gray-800 z-50">
+                                <a href="#" onclick="showSection('profile')" class="block px-4 py-2 hover:bg-gray-100">
+                                    <i class="fas fa-user-circle mr-2 text-gray-400"></i>Profile
+                                </a>
+                                <a href="#" onclick="showSection('settings')" class="block px-4 py-2 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2 text-gray-400"></i>Settings
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="#" onclick="logout()" class="block px-4 py-2 hover:bg-gray-100 text-red-600">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div class="md:hidden border-t border-blue-700">
+                <div class="flex justify-around py-2">
+                    <button onclick="showSection('dashboard')" class="p-2 text-center">
+                        <i class="fas fa-home block mb-1"></i>
+                        <span class="text-xs">Home</span>
+                    </button>
+                    <button onclick="showSection('transfer')" class="p-2 text-center">
+                        <i class="fas fa-exchange-alt block mb-1"></i>
+                        <span class="text-xs">Transfer</span>
+                    </button>
+                    <button onclick="showSection('pay')" class="p-2 text-center">
+                        <i class="fas fa-paper-plane block mb-1"></i>
+                        <span class="text-xs">Pay</span>
+                    </button>
+                    <button onclick="showSection('cards')" class="p-2 text-center">
+                        <i class="fas fa-credit-card block mb-1"></i>
+                        <span class="text-xs">Cards</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
+            
+            <!-- Welcome Banner -->
+            <div class="mb-8 flex justify-between items-end">
+                <div>
+                    <h1 id="welcomeMessage" class="text-3xl font-bold text-gray-900">Welcome back</h1>
+                    <p class="text-gray-600 mt-1">Last login: <span id="lastLogin">Today</span></p>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-sm text-gray-500">Account Status</p>
+                    <p class="text-green-600 font-semibold flex items-center justify-end">
+                        <i class="fas fa-check-circle mr-1"></i> Active
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="space-y-6 animate-fade-in">
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="showSection('transfer')" class="quick-action-btn bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 text-center group">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-600 transition">
+                            <i class="fas fa-exchange-alt text-blue-600 group-hover:text-white transition"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Transfer</span>
+                    </button>
+                    <button onclick="showSection('pay')" class="quick-action-btn bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 text-center group">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-green-600 transition">
+                            <i class="fas fa-paper-plane text-green-600 group-hover:text-white transition"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Pay Bills</span>
+                    </button>
+                    <button onclick="showDepositModal()" class="quick-action-btn bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 text-center group">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-purple-600 transition">
+                            <i class="fas fa-mobile-alt text-purple-600 group-hover:text-white transition"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Deposit</span>
+                    </button>
+                    <button onclick="showSection('cards')" class="quick-action-btn bg-white p-4 rounded-xl shadow-sm hover:shadow-md border border-gray-100 text-center group">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition">
+                            <i class="fas fa-credit-card text-orange-600 group-hover:text-white transition"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Cards</span>
+                    </button>
+                </div>
+
+                <!-- Accounts Overview -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Checking -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-blue-600 relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase tracking-wide">Platinum Checking</p>
+                                <p class="text-xs text-gray-400 mt-1" id="checkingNumber">****0000</p>
+                            </div>
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-wallet text-blue-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-gray-900 balance-shimmer" id="checkingBalance">$0.00</p>
+                        <p class="text-sm text-green-600 mt-2 flex items-center">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="checkingChange">Available</span>
+                        </p>
+                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm">
+                            <span class="text-gray-500" id="checkingAvailable">Available: $0.00</span>
+                            <button onclick="showAccountDetails('checking')" class="text-blue-600 font-medium hover:underline">Details</button>
+                        </div>
+                    </div>
+
+                    <!-- Savings -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-green-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase tracking-wide">High Yield Savings</p>
+                                <p class="text-xs text-gray-400 mt-1" id="savingsNumber">****0000</p>
+                            </div>
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-piggy-bank text-green-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-gray-900" id="savingsBalance">$0.00</p>
+                        <p class="text-sm text-green-600 mt-2 flex items-center">
+                            <i class="fas fa-percentage mr-1"></i>
+                            4.25% APY
+                        </p>
+                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm">
+                            <span class="text-gray-500">Interest YTD: <span id="savingsInterest">$0.00</span></span>
+                            <button onclick="showAccountDetails('savings')" class="text-blue-600 font-medium hover:underline">Details</button>
+                        </div>
+                    </div>
+
+                    <!-- Credit Card -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-purple-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium uppercase tracking-wide">Cash Rewards Visa</p>
+                                <p class="text-xs text-gray-400 mt-1" id="cardNumber">****0000</p>
+                            </div>
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-credit-card text-purple-600"></i>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-gray-900" id="cardBalance">$0.00</p>
+                        <p class="text-sm text-gray-500 mt-2">Current Balance</p>
+                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm">
+                            <span class="text-gray-500">Limit: $10,000</span>
+                            <span class="text-green-600 font-medium" id="cardDue">Paid in Full</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Activity -->
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-900">Spending Overview</h3>
+                            <select id="chartPeriod" onchange="updateChart()" class="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 px-3 py-1">
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 3 Months</option>
+                                <option value="180">Last 6 Months</option>
+                            </select>
+                        </div>
+                        <canvas id="spendingChart" height="250"></canvas>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-900">Recent Activity</h3>
+                            <button onclick="showSection('accounts')" class="text-blue-600 text-sm font-medium hover:underline">View All</button>
+                        </div>
+                        <div id="recentTransactions" class="space-y-3 max-h-80 overflow-y-auto hide-scrollbar">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounts Section -->
+            <div id="accountsSection" class="hidden space-y-6 animate-fade-in">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-2xl font-bold text-gray-900">Account Activity</h2>
+                        <p class="text-gray-600 mt-1">View and manage all your transactions</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex flex-col md:flex-row gap-4 mb-6">
+                            <select id="accountFilter" onchange="filterTransactions()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="all">All Accounts</option>
+                                <option value="checking">Platinum Checking</option>
+                                <option value="savings">High Yield Savings</option>
+                                <option value="card">Cash Rewards Visa</option>
+                            </select>
+                            
+                            <input type="text" id="searchTransactions" onkeyup="searchTransactions()" placeholder="Search transactions..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            
+                            <select id="timeFilter" onchange="filterTransactions()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="all">All Time</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                            </select>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-tl-lg">Date</th>
+                                        <th class="px-4 py-3">Description</th>
+                                        <th class="px-4 py-3">Category</th>
+                                        <th class="px-4 py-3">Account</th>
+                                        <th class="px-4 py-3 text-right rounded-tr-lg">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTable" class="divide-y divide-gray-200">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Section -->
+            <div id="transferSection" class="hidden space-y-6 animate-fade-in">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Transfer Money</h2>
+                        
+                        <form onsubmit="handleTransfer(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">From Account</label>
+                                <select id="transferFrom" onchange="updateTransferTo()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-blue-600"></i>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">To Account</label>
+                                <select id="transferTo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-3 text-gray-500 text-lg">$</span>
+                                    <input type="number" id="transferAmount" step="0.01" min="0.01" required class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg" placeholder="0.00">
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">Available: <span id="transferAvailable">$0.00</span></p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Memo (Optional)</label>
+                                <input type="text" id="transferMemo" maxlength="50" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="What's this for?">
+                            </div>
+                            
+                            <div class="flex items-center space-x-6">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="transferWhen" value="now" checked class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                    <span class="ml-2 text-gray-700">Transfer Now</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="transferWhen" value="later" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                    <span class="ml-2 text-gray-700">Schedule</span>
+                                </label>
+                            </div>
+                            
+                            <div id="scheduleDate" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Schedule Date</label>
+                                <input type="date" id="transferDate" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            
+                            <button type="submit" id="transferBtn" class="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg flex items-center justify-center space-x-2">
+                                <span>Review Transfer</span>
+                                <div id="transferSpinner" class="loading-spinner hidden"></div>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pay Bills Section -->
+            <div id="paySection" class="hidden space-y-6 animate-fade-in">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2 space-y-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-2xl font-bold text-gray-900">Pay Bills</h2>
+                                <button onclick="showAddPayeeModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                                    <i class="fas fa-plus mr-2"></i>Add Payee
+                                </button>
+                            </div>
+                            
+                            <div id="payeesList" class="space-y-4">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Payment History</h3>
+                            <div id="paymentHistory" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Stats</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <p class="text-sm text-gray-500">Bills Due This Week</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="billsDueCount">0</p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <p class="text-sm text-gray-500">Total Amount Due</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalDueAmount">$0.00</p>
+                                </div>
+                                <div class="p-4 bg-blue-50 rounded-xl">
+                                    <p class="text-sm text-blue-600">Auto-pay Active</p>
+                                    <p class="text-2xl font-bold text-blue-900" id="autopayCount">0 bills</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-lg p-6 text-white">
+                            <h3 class="font-bold mb-2">Bill Pay Guarantee</h3>
+                            <p class="text-sm text-blue-100">We guarantee your payments will arrive on time, or we'll cover any late fees up to $50.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Section -->
+            <div id="cardsSection" class="hidden space-y-6 animate-fade-in">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Card Visual -->
+                    <div class="credit-card rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden h-64 flex flex-col justify-between">
+                        <div class="flex justify-between items-start relative z-10">
+                            <div class="text-2xl font-bold italic tracking-wider">VISA</div>
+                            <i class="fas fa-wifi text-2xl rotate-90 opacity-80"></i>
+                        </div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="w-12 h-9 bg-yellow-400 rounded opacity-90"></div>
+                                <div class="w-8 h-6 border-2 border-white rounded opacity-60"></div>
+                            </div>
+                            <div class="text-2xl font-mono tracking-widest mb-6" id="displayCardNumber">
+                                **** **** **** 0000
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-xs opacity-75 uppercase mb-1">Card Holder</p>
+                                    <p class="font-semibold tracking-wide uppercase" id="displayCardName">NAME</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs opacity-75 uppercase mb-1">Expires</p>
+                                    <p class="font-semibold" id="displayCardExpiry">00/00</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
+                        <div class="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-24 -mb-24"></div>
+                    </div>
+                    
+                    <!-- Card Controls -->
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Card Controls</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-700">Lock Card</p>
+                                            <p class="text-xs text-gray-500">Prevent all transactions</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="lockCard" onchange="toggleCardLock()" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-globe text-gray-400"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-700">International</p>
+                                            <p class="text-xs text-gray-500">Allow foreign transactions</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="intlCard" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-shopping-cart text-gray-400"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-700">Online Purchases</p>
+                                            <p class="text-xs text-gray-500">Allow e-commerce</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="onlineCard" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Card Services</h3>
+                            <div class="space-y-2">
+                                <button onclick="showCardNumber()" class="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-left px-4">
+                                    <i class="fas fa-eye mr-2 w-5"></i>Show Card Number
+                                </button>
+                                <button onclick="requestNewCard()" class="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-left px-4">
+                                    <i class="fas fa-credit-card mr-2 w-5"></i>Request New Card
+                                </button>
+                                <button onclick="disputeCharge()" class="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition text-left px-4">
+                                    <i class="fas fa-exclamation-circle mr-2 w-5"></i>Dispute a Charge
+                                </button>
+                                <button onclick="reportLost()" class="w-full py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition text-left px-4">
+                                    <i class="fas fa-exclamation-triangle mr-2 w-5"></i>Report Lost/Stolen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Stats -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <p class="text-sm text-gray-500 mb-1">Current Balance</p>
+                        <p class="text-2xl font-bold text-gray-900" id="ccBalance">$0.00</p>
+                        <p class="text-sm text-green-600 mt-1">Credit Available: <span id="ccAvailable">$10,000</span></p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <p class="text-sm text-gray-500 mb-1">Next Payment Due</p>
+                        <p class="text-2xl font-bold text-gray-900" id="ccDueDate">May 2, 2026</p>
+                        <p class="text-sm text-gray-600 mt-1">Minimum: <span id="ccMinimum">$0.00</span></p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <p class="text-sm text-gray-500 mb-1">Cash Back Earned</p>
+                        <p class="text-2xl font-bold text-purple-600" id="ccCashback">$0.00</p>
+                        <p class="text-sm text-gray-600 mt-1">1.5% on all purchases</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profileSection" class="hidden space-y-6 animate-fade-in">
+                <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h2>
+                    
+                    <form onsubmit="updateProfile(event)" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" id="profileFirstName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" id="profileLastName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="profileEmail" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" id="profilePhone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="profileAddress" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Mobile Deposit</h3>
+                <button onclick="closeModal('depositModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleDeposit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Deposit To</label>
+                    <select id="depositAccount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="checking">Platinum Checking</option>
+                        <option value="savings">High Yield Savings</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500">$</span>
+                        <input type="number" id="depositAmount" step="0.01" min="0.01" required class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition cursor-pointer" onclick="document.getElementById('checkImage').click()">
+                    <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-600">Tap to take photo of check</p>
+                    <p class="text-sm text-gray-400 mt-1">Front and back required</p>
+                    <input type="file" id="checkImage" accept="image/*" class="hidden" capture="environment">
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Submit Deposit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Payee Modal -->
+    <div id="addPayeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Add New Payee</h3>
+                <button onclick="closeModal('addPayeeModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleAddPayee(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payee Name</label>
+                    <input type="text" id="payeeName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                    <input type="text" id="payeeAccount" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Address</label>
+                    <textarea id="payeeAddress" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Typical Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500">$</span>
+                        <input type="number" id="payeeAmount" step="0.01" class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Add Payee
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Make Payment</h3>
+                <button onclick="closeModal('paymentModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handlePayment(event)" class="space-y-4">
+                <input type="hidden" id="paymentPayeeId">
+                
+                <div class="p-4 bg-gray-50 rounded-xl mb-4">
+                    <p class="text-sm text-gray-500">Paying</p>
+                    <p class="font-bold text-gray-900" id="paymentPayeeName">Payee Name</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">From Account</label>
+                    <select id="paymentFrom" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="checking">Platinum Checking</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-500">$</span>
+                        <input type="number" id="paymentAmount" step="0.01" min="0.01" required class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Date</label>
+                    <input type="date" id="paymentDate" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Send Payment
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Review Modal -->
+    <div id="reviewTransferModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-in">
+            <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Review Transfer</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-600">From</span>
+                    <span class="font-medium" id="reviewFrom">Account</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-600">To</span>
+                    <span class="font-medium" id="reviewTo">Account</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-600">Amount</span>
+                    <span class="font-bold text-xl text-gray-900" id="reviewAmount">$0.00</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <span class="text-gray-600">When</span>
+                    <span class="font-medium" id="reviewWhen">Today</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-600">Memo</span>
+                    <span class="font-medium" id="reviewMemo">-</span>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <button onclick="confirmTransfer()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg">
+                    Confirm Transfer
+                </button>
+                <button onclick="closeModal('reviewTransferModal')" class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banking Application State
+        let currentUser = null;
+        let chartInstance = null;
+        let pendingTransfer = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExistingSession();
+            setupEventListeners();
+            
+            // Set default transfer date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('transferDate').value = today;
+            document.getElementById('paymentDate').value = today;
+        });
+
+        function checkExistingSession() {
+            const saved = localStorage.getItem('fnb_current_user');
+            const session = sessionStorage.getItem('fnb_session');
+            
+            if (saved && session) {
+                currentUser = JSON.parse(saved);
+                showMainApp();
+            }
+        }
+
+        function setupEventListeners() {
+            // Transfer when radio buttons
+            document.querySelectorAll('input[name="transferWhen"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const dateDiv = document.getElementById('scheduleDate');
+                    dateDiv.classList.toggle('hidden', this.value !== 'later');
+                });
+            });
+        }
+
+        // Authentication Functions
+        function showEnroll() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('enrollForm').classList.remove('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('enrollForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.add('hidden');
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('forgotForm').classList.remove('hidden');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const userId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Show spinner
+            document.getElementById('loginSpinner').classList.remove('hidden');
+            
+            setTimeout(() => {
+                const users = JSON.parse(localStorage.getItem('fnb_users') || '[]');
+                const user = users.find(u => u.userId === userId && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    currentUser.lastLogin = new Date().toLocaleString();
+                    
+                    if (document.getElementById('rememberMe').checked) {
+                        localStorage.setItem('fnb_current_user', JSON.stringify(currentUser));
+                    }
+                    sessionStorage.setItem('fnb_session', 'active');
+                    
+                    showToast('Welcome back, ' + user.firstName + '!', 'success');
+                    showMainApp();
+                } else {
+                    showToast('Invalid User ID or Password', 'error');
+                }
+                
+                document.getElementById('loginSpinner').classList.add('hidden');
+            }, 1000);
+        }
+
+        function handleEnroll(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('enrollPassword').value;
+            const confirmPassword = document.getElementById('enrollConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (!validatePassword(password)) {
+                showToast('Password must contain uppercase, number, and special character', 'error');
+                return;
+            }
+            
+            document.getElementById('enrollSpinner').classList.remove('hidden');
+            
+            setTimeout(() => {
+                const users = JSON.parse(localStorage.getItem('fnb_users') || '[]');
+                const newUserId = document.getElementById('enrollUserId').value;
+                
+                if (users.find(u => u.userId === newUserId)) {
+                    showToast('User ID already exists', 'error');
+                    document.getElementById('enrollSpinner').classList.add('hidden');
+                    return;
+                }
+                
+                const initialDeposit = parseFloat(document.getElementById('enrollDeposit').value) || 1000;
+                
+                const newUser = {
+                    id: Date.now(),
+                    userId: newUserId,
+                    password: password,
+                    firstName: document.getElementById('enrollFirstName').value,
+                    lastName: document.getElementById('enrollLastName').value,
+                    email: document.getElementById('enrollEmail').value,
+                    phone: document.getElementById('enrollPhone').value,
+                    address: '',
+                    createdAt: new Date().toISOString(),
+                    lastLogin: new Date().toLocaleString(),
+                    accounts: {
+                        checking: {
+                            number: '4521',
+                            balance: initialDeposit,
+                            available: initialDeposit
+                        },
+                        savings: {
+                            number: '7894',
+                            balance: 0,
+                            interest: 0
+                        },
+                        card: {
+                            number: '8842',
+                            balance: 0,
+                            limit: 10000,
+                            available: 10000,
+                            dueDate: getNextMonthDate(),
+                            cashback: 0
+                        }
+                    },
+                    transactions: generateInitialTransactions(initialDeposit),
+                    payees: [
+                        { id: 1, name: 'Electric Company', account: 'ELEC-001', amount: 134.00, autopay: true },
+                        { id: 2, name: 'Internet Provider', account: 'NET-001', amount: 79.99, autopay: true },
+                        { id: 3, name: 'Mortgage Company', account: 'MORT-001', amount: 2100.00, autopay: false }
+                    ],
+                    payments: []
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('fnb_users', JSON.stringify(users));
+                
+                currentUser = newUser;
+                localStorage.setItem('fnb_current_user', JSON.stringify(currentUser));
+                sessionStorage.setItem('fnb_session', 'active');
+                
+                showToast('Account created successfully!', 'success');
+                showMainApp();
+            }, 1500);
+        }
+
+        function validatePassword(password) {
+            return /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+        }
+
+        function getNextMonthDate() {
+            const date = new Date();
+            date.setMonth(date.getMonth() + 1);
+            return date.toISOString().split('T')[0];
+        }
+
+        function generateInitialTransactions(initialDeposit) {
+            const transactions = [];
+            const categories = ['Deposit', 'Transfer', 'Payment', 'Purchase', 'Refund'];
+            const descriptions = ['Initial Deposit', 'Payroll Deposit', 'Electric Bill', 'Grocery Store', 'Online Purchase', 'Refund'];
+            
+            // Add initial deposit
+            transactions.push({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                description: 'Account Opening Deposit',
+                category: 'Deposit',
+                account: 'checking',
+                amount: initialDeposit,
+                type: 'credit'
+            });
+            
+            // Generate some random history
+            for (let i = 1; i <= 10; i++) {
+                const daysAgo = i * 3;
+                const date = new Date();
+                date.setDate(date.getDate() - daysAgo);
+                
+                const isCredit = Math.random() > 0.6;
+                const amount = (Math.random() * 500 + 50).toFixed(2);
+                
+                transactions.push({
+                    id: Date.now() + i,
+                    date: date.toISOString(),
+                    description: descriptions[Math.floor(Math.random() * descriptions.length)],
+                    category: categories[Math.floor(Math.random() * categories.length)],
+                    account: ['checking', 'savings', 'card'][Math.floor(Math.random() * 3)],
+                    amount: parseFloat(amount),
+                    type: isCredit ? 'credit' : 'debit'
+                });
+            }
+            
+            return transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            showToast('Password reset link sent to your email', 'success');
+            showLogin();
+        }
+
+        function logout() {
+            localStorage.removeItem('fnb_current_user');
+            sessionStorage.removeItem('fnb_session');
+            currentUser = null;
+            location.reload();
+        }
+
+        // Main App Functions
+        function showMainApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('animate-fade-in');
+            
+            updateUserDisplay();
+            updateBalances();
+            loadTransactions();
+            loadPayees();
+            initChart();
+        }
+
+        function updateUserDisplay() {
+            document.getElementById('userNameDisplay').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+            document.getElementById('welcomeMessage').textContent = 'Welcome back, ' + currentUser.firstName;
+            document.getElementById('lastLogin').textContent = currentUser.lastLogin || 'Today';
+            
+            // Profile form
+            document.getElementById('profileFirstName').value = currentUser.firstName;
+            document.getElementById('profileLastName').value = currentUser.lastName;
+            document.getElementById('profileEmail').value = currentUser.email;
+            document.getElementById('profilePhone').value = currentUser.phone || '';
+            document.getElementById('profileAddress').value = currentUser.address || '';
+            
+            // Card display
+            document.getElementById('displayCardName').textContent = (currentUser.firstName + ' ' + currentUser.lastName).toUpperCase();
+            document.getElementById('displayCardNumber').textContent = '**** **** **** ' + currentUser.accounts.card.number;
+        }
+
+        function updateBalances() {
+            const acc = currentUser.accounts;
+            
+            // Checking
+            document.getElementById('checkingBalance').textContent = formatCurrency(acc.checking.balance);
+            document.getElementById('checkingAvailable').textContent = 'Available: ' + formatCurrency(acc.checking.available);
+            document.getElementById('checkingNumber').textContent = '****' + acc.checking.number;
+            
+            // Savings
+            document.getElementById('savingsBalance').textContent = formatCurrency(acc.savings.balance);
+            document.getElementById('savingsInterest').textContent = formatCurrency(acc.savings.interest);
+            document.getElementById('savingsNumber').textContent = '****' + acc.savings.number;
+            
+            // Card
+            document.getElementById('cardBalance').textContent = formatCurrency(acc.card.balance);
+            document.getElementById('cardNumber').textContent = '****' + acc.card.number;
+            document.getElementById('ccBalance').textContent = formatCurrency(acc.card.balance);
+            document.getElementById('ccAvailable').textContent = formatCurrency(acc.card.available);
+            document.getElementById('ccCashback').textContent = formatCurrency(acc.card.cashback);
+            
+            // Calculate minimum payment (2% or $25, whichever is greater)
+            const minPayment = Math.max(acc.card.balance * 0.02, 25);
+            document.getElementById('ccMinimum').textContent = acc.card.balance > 0 ? formatCurrency(minPayment) : '$0.00';
+            
+            // Update transfer dropdowns
+            updateTransferOptions();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function loadTransactions(limit = 5) {
+            const container = document.getElementById('recentTransactions');
+            const tableBody = document.getElementById('transactionsTable');
+            
+            container.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            const sorted = currentUser.transactions.slice(0, limit === 'all' ? undefined : limit);
+            
+            sorted.forEach(t => {
+                // Dashboard list
+                const icon = getCategoryIcon(t.category);
+                const colorClass = t.type === 'credit' ? 'text-green-600' : 'text-gray-900';
+                const sign = t.type === 'credit' ? '+' : '-';
+                
+                const html = `
+                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition cursor-pointer" onclick="showTransactionDetail(${t.id})">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 ${icon.bg} rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="${icon.icon} ${icon.color} text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-medium text-gray-900 truncate">${t.description}</p>
+                                <p class="text-xs text-gray-500">${formatDate(t.date)}</p>
+                            </div>
+                        </div>
+                        <span class="font-semibold ${colorClass} flex-shrink-0">${sign}${formatCurrency(t.amount)}</span>
+                    </div>
+                `;
+                container.innerHTML += html;
+                
+                // Table row
+                const row = `
+                    <tr class="hover:bg-gray-50 cursor-pointer" onclick="showTransactionDetail(${t.id})">
+                        <td class="px-4 py-3 text-sm">${formatDate(t.date)}</td>
+                        <td class="px-4 py-3 font-medium">${t.description}</td>
+                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-gray-100 rounded-full text-xs">${t.category}</span></td>
+                        <td class="px-4 py-3 text-sm capitalize">${t.account}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${colorClass}">${sign}${formatCurrency(t.amount)}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'Deposit': { icon: 'fas fa-arrow-down', bg: 'bg-green-100', color: 'text-green-600' },
+                'Transfer': { icon: 'fas fa-exchange-alt', bg: 'bg-blue-100', color: 'text-blue-600' },
+                'Payment': { icon: 'fas fa-file-invoice-dollar', bg: 'bg-red-100', color: 'text-red-600' },
+                'Purchase': { icon: 'fas fa-shopping-bag', bg: 'bg-purple-100', color: 'text-purple-600' },
+                'Refund': { icon: 'fas fa-undo', bg: 'bg-yellow-100', color: 'text-yellow-600' },
+                'Food': { icon: 'fas fa-utensils', bg: 'bg-orange-100', color: 'text-orange-600' },
+                'Transport': { icon: 'fas fa-car', bg: 'bg-gray-100', color: 'text-gray-600' }
+            };
+            return icons[category] || { icon: 'fas fa-circle', bg: 'bg-gray-100', color: 'text-gray-600' };
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // Navigation
+        function showSection(section) {
+            // Hide all sections
+            ['dashboard', 'accounts', 'transfer', 'pay', 'cards', 'profile'].forEach(s => {
+                document.getElementById(s + 'Section').classList.add('hidden');
+                const nav = document.getElementById('nav-' + s);
+                if (nav) nav.classList.remove('active');
+            });
+            
+            // Show selected
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            const nav = document.getElementById('nav-' + section);
+            if (nav) nav.classList.add('active');
+            
+            // Special handling
+            if (section === 'accounts') loadTransactions('all');
+            if (section === 'pay') loadPayees();
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('userDropdown').classList.toggle('hidden');
+        }
+
+        // Transfer Functions
+        function updateTransferOptions() {
+            const fromSelect = document.getElementById('transferFrom');
+            const toSelect = document.getElementById('transferTo');
+            
+            fromSelect.innerHTML = `
+                <option value="checking">Platinum Checking (...${currentUser.accounts.checking.number}) - ${formatCurrency(currentUser.accounts.checking.balance)}</option>
+                <option value="savings">High Yield Savings (...${currentUser.accounts.savings.number}) - ${formatCurrency(currentUser.accounts.savings.balance)}</option>
+            `;
+            
+            updateTransferTo();
+        }
+
+        function updateTransferTo() {
+            const from = document.getElementById('transferFrom').value;
+            const toSelect = document.getElementById('transferTo');
+            const available = currentUser.accounts[from].balance;
+            
+            document.getElementById('transferAvailable').textContent = formatCurrency(available);
+            
+            toSelect.innerHTML = '';
+            if (from !== 'checking') {
+                toSelect.innerHTML += `<option value="checking">Platinum Checking (...${currentUser.accounts.checking.number})</option>`;
+            }
+            if (from !== 'savings') {
+                toSelect.innerHTML += `<option value="savings">High Yield Savings (...${currentUser.accounts.savings.number})</option>`;
+            }
+            toSelect.innerHTML += `<option value="external">External Account (...4455)</option>`;
+        }
+
+        function handleTransfer(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            const from = document.getElementById('transferFrom').value;
+            const to = document.getElementById('transferTo').value;
+            const memo = document.getElementById('transferMemo').value;
+            const when = document.querySelector('input[name="transferWhen"]:checked').value;
+            
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return;
+            }
+            
+            if (amount > currentUser.accounts[from].balance) {
+                showToast('Insufficient funds', 'error');
+                return;
+            }
+            
+            pendingTransfer = { amount, from, to, memo, when };
+            
+            document.getElementById('reviewFrom').textContent = from === 'checking' ? 'Platinum Checking' : 'High Yield Savings';
+            document.getElementById('reviewTo').textContent = to === 'external' ? 'External Account (...4455)' : (to === 'checking' ? 'Platinum Checking' : 'High Yield Savings');
+            document.getElementById('reviewAmount').textContent = formatCurrency(amount);
+            document.getElementById('reviewWhen').textContent = when === 'now' ? 'Today' : document.getElementById('transferDate').value;
+            document.getElementById('reviewMemo').textContent = memo || '-';
+            
+            document.getElementById('reviewTransferModal').classList.remove('hidden');
+        }
+
+        function confirmTransfer() {
+            if (!pendingTransfer) return;
+            
+            const { amount, from, to, memo, when } = pendingTransfer;
+            
+            // Deduct from source
+            currentUser.accounts[from].balance -= amount;
+            currentUser.accounts[from].available -= amount;
+            
+            // Add to destination (if internal)
+            if (to !== 'external') {
+                currentUser.accounts[to].balance += amount;
+                if (to === 'checking') currentUser.accounts[to].available += amount;
+            }
+            
+            // Add transaction
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                description: 'Transfer to ' + (to === 'external' ? 'External' : to.charAt(0).toUpperCase() + to.slice(1)),
+                category: 'Transfer',
+                account: from,
+                amount: amount,
+                type: 'debit',
+                memo: memo
+            });
+            
+            if (to !== 'external') {
+                currentUser.transactions.unshift({
+                    id: Date.now() + 1,
+                    date: new Date().toISOString(),
+                    description: 'Transfer from ' + (from === 'checking' ? 'Checking' : 'Savings'),
+                    category: 'Transfer',
+                    account: to,
+                    amount: amount,
+                    type: 'credit',
+                    memo: memo
+                });
+            }
+            
+            saveUser();
+            updateBalances();
+            loadTransactions();
+            
+            closeModal('reviewTransferModal');
+            showToast('Transfer completed successfully', 'success');
+            
+            pendingTransfer = null;
+            document.getElementById('transferAmount').value = '';
+            document.getElementById('transferMemo').value = '';
+        }
+
+        // Deposit Functions
+        function showDepositModal() {
+            document.getElementById('depositModal').classList.remove('hidden');
+        }
+
+        function handleDeposit(e) {
+            e.preventDefault();
+            const account = document.getElementById('depositAccount').value;
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showToast('Please enter a valid amount', 'error');
+                return;
+            }
+            
+            // Simulate processing delay
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                currentUser.accounts[account].balance += amount;
+                if (account === 'checking') currentUser.accounts[account].available += amount;
+                
+                currentUser.transactions.unshift({
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    description: 'Mobile Check Deposit',
+                    category: 'Deposit',
+                    account: account,
+                    amount: amount,
+                    type: 'credit'
+                });
+                
+                saveUser();
+                updateBalances();
+                loadTransactions();
+                
+                closeModal('depositModal');
+                showToast('Deposit submitted for processing', 'success');
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                e.target.reset();
+            }, 2000);
+        }
+
+        // Payee Functions
+        function loadPayees() {
+            const container = document.getElementById('payeesList');
+            const historyContainer = document.getElementById('paymentHistory');
+            
+            container.innerHTML = '';
+            historyContainer.innerHTML = '';
+            
+            let dueCount = 0;
+            let totalDue = 0;
+            let autopayCount = 0;
+            
+            currentUser.payees.forEach(payee => {
+                if (payee.autopay) autopayCount++;
+                dueCount++;
+                totalDue += payee.amount;
+                
+                const html = `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-blue-300 transition">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-building text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">${payee.name}</p>
+                                <p class="text-sm text-gray-500">Acct: ...${payee.account.slice(-4)}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-900">${formatCurrency(payee.amount)}</p>
+                            <p class="text-xs ${payee.autopay ? 'text-green-600' : 'text-gray-500'}">
+                                ${payee.autopay ? '<i class="fas fa-check-circle mr-1"></i>Auto-pay' : 'Manual'}
+                            </p>
+                            <button onclick="showPaymentModal(${payee.id})" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Pay</button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+            
+            // Payment history
+            currentUser.payments.slice(0, 5).forEach(p => {
+                historyContainer.innerHTML += `
+                    <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">${p.payeeName}</p>
+                            <p class="text-xs text-gray-500">${formatDate(p.date)}</p>
+                        </div>
+                        <span class="font-semibold text-gray-900">${formatCurrency(p.amount)}</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('billsDueCount').textContent = dueCount;
+            document.getElementById('totalDueAmount').textContent = formatCurrency(totalDue);
+            document.getElementById('autopayCount').textContent = autopayCount + ' bills';
+        }
+
+        function showAddPayeeModal() {
+            document.getElementById('addPayeeModal').classList.remove('hidden');
+        }
+
+        function handleAddPayee(e) {
+            e.preventDefault();
+            
+            const newPayee = {
+                id: Date.now(),
+                name: document.getElementById('payeeName').value,
+                account: document.getElementById('payeeAccount').value,
+                address: document.getElementById('payeeAddress').value,
+                amount: parseFloat(document.getElementById('payeeAmount').value) || 0,
+                autopay: false
+            };
+            
+            currentUser.payees.push(newPayee);
+            saveUser();
+            loadPayees();
+            closeModal('addPayeeModal');
+            showToast('Payee added successfully', 'success');
+            e.target.reset();
+        }
+
+        function showPaymentModal(payeeId) {
+            const payee = currentUser.payees.find(p => p.id === payeeId);
+            if (!payee) return;
+            
+            document.getElementById('paymentPayeeId').value = payeeId;
+            document.getElementById('paymentPayeeName').textContent = payee.name;
+            document.getElementById('paymentAmount').value = payee.amount.toFixed(2);
+            document.getElementById('paymentModal').classList.remove('hidden');
+        }
+
+        function handlePayment(e) {
+            e.preventDefault();
+            const payeeId = parseInt(document.getElementById('paymentPayeeId').value);
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const from = document.getElementById('paymentFrom').value;
+            
+            if (amount > currentUser.accounts[from].balance) {
+                showToast('Insufficient funds', 'error');
+                return;
+            }
+            
+            currentUser.accounts[from].balance -= amount;
+            currentUser.accounts[from].available -= amount;
+            
+            const payee = currentUser.payees.find(p => p.id === payeeId);
+            
+            currentUser.payments.unshift({
+                id: Date.now(),
+                payeeId: payeeId,
+                payeeName: payee.name,
+                amount: amount,
+                date: new Date().toISOString(),
+                from: from
+            });
+            
+            currentUser.transactions.unshift({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                description: 'Payment to ' + payee.name,
+                category: 'Payment',
+                account: from,
+                amount: amount,
+                type: 'debit'
+            });
+            
+            saveUser();
+            updateBalances();
+            loadTransactions();
+            loadPayees();
+            
+            closeModal('paymentModal');
+            showToast('Payment scheduled successfully', 'success');
+        }
+
+        // Card Functions
+        function toggleCardLock() {
+            const isLocked = document.getElementById('lockCard').checked;
+            showToast(isLocked ? 'Card locked successfully' : 'Card unlocked', isLocked ? 'warning' : 'success');
+        }
+
+        function showCardNumber() {
+            const fullNumber = '4532 1234 5678 ' + currentUser.accounts.card.number;
+            showToast('Card Number: ' + fullNumber, 'info', 5000);
+        }
+
+        function requestNewCard() {
+            showToast('New card request submitted. Expected delivery: 5-7 business days.', 'success');
+        }
+
+        function disputeCharge() {
+            showToast('Please call customer service at 1-800-FNB-HELP to dispute charges', 'info');
+        }
+
+        function reportLost() {
+            if (confirm('Are you sure you want to report this card lost/stolen? This will permanently lock the card.')) {
+                document.getElementById('lockCard').checked = true;
+                showToast('Card reported lost. New card being issued.', 'warning');
+            }
+        }
+
+        // Profile Functions
+        function updateProfile(e) {
+            e.preventDefault();
+            
+            currentUser.firstName = document.getElementById('profileFirstName').value;
+            currentUser.lastName = document.getElementById('profileLastName').value;
+            currentUser.email = document.getElementById('profileEmail').value;
+            currentUser.phone = document.getElementById('profilePhone').value;
+            currentUser.address = document.getElementById('profileAddress').value;
+            
+            saveUser();
+            updateUserDisplay();
+            showToast('Profile updated successfully', 'success');
+        }
+
+        // Chart Functions
+        function initChart() {
+            const ctx = document.getElementById('spendingChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+            
+            const data = getChartData(30);
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Income',
+                        data: data.income,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Expenses',
+                        data: data.expenses,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getChartData(days) {
+            const labels = [];
+            const income = [];
+            const expenses = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - (i * Math.floor(days / 7)));
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                income.push(Math.random() * 3000 + 500);
+                expenses.push(Math.random() * 1500 + 200);
+            }
+            
+            return { labels, income, expenses };
+        }
+
+        function updateChart() {
+            initChart();
+        }
+
+        // Filter Functions
+        function filterTransactions() {
+            const account = document.getElementById('accountFilter').value;
+            const days = document.getElementById('timeFilter').value;
+            
+            let filtered = currentUser.transactions;
+            
+            if (account !== 'all') {
+                filtered = filtered.filter(t => t.account === account);
+            }
+            
+            if (days !== 'all') {
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - parseInt(days));
+                filtered = filtered.filter(t => new Date(t.date) >= cutoff);
+            }
+            
+            // Re-render table
+            const tableBody = document.getElementById('transactionsTable');
+            tableBody.innerHTML = '';
+            
+            filtered.forEach(t => {
+                const icon = getCategoryIcon(t.category);
+                const colorClass = t.type === 'credit' ? 'text-green-600' : 'text-gray-900';
+                const sign = t.type === 'credit' ? '+' : '-';
+                
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 cursor-pointer">
+                        <td class="px-4 py-3 text-sm">${formatDate(t.date)}</td>
+                        <td class="px-4 py-3 font-medium">${t.description}</td>
+                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-gray-100 rounded-full text-xs">${t.category}</span></td>
+                        <td class="px-4 py-3 text-sm capitalize">${t.account}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${colorClass}">${sign}${formatCurrency(t.amount)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function searchTransactions() {
+            const term = document.getElementById('searchTransactions').value.toLowerCase();
+            const rows = document.querySelectorAll('#transactionsTable tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        }
+
+        // Utility Functions
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-600'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            toast.className = `notification ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 min-w-[300px]`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type]}"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function saveUser() {
+            const users = JSON.parse(localStorage.getItem('fnb_users') || '[]');
+            const index = users.findIndex(u => u.id === currentUser.id);
+            
+            if (index !== -1) {
+                users[index] = currentUser;
+                localStorage.setItem('fnb_users', JSON.stringify(users));
+                localStorage.setItem('fnb_current_user', JSON.stringify(currentUser));
+            }
+        }
+
+        function showNotifications() {
+            showToast('You have no new notifications', 'info');
+        }
+
+        function showAccountDetails(account) {
+            showSection('accounts');
+            document.getElementById('accountFilter').value = account;
+            filterTransactions();
+        }
+
+        function showTransactionDetail(id) {
+            const t = currentUser.transactions.find(tr => tr.id === id);
+            if (t) {
+                showToast(`${t.description}: ${t.type === 'credit' ? '+' : '-'}${formatCurrency(t.amount)}`, 'info');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.getElementById('userMenu');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (!userMenu.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
